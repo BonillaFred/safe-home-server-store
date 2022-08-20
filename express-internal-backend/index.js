@@ -11,7 +11,7 @@ const corsOptions = {
 
 }
 //https://stackoverflow.com/questions/11744975/enabling-https-on-express-js
-// Following from:
+// Following from: 
 let fs = require('fs')
 let https = require('https')
 
@@ -30,7 +30,7 @@ const PORT = 8080;
 function writeLog(ip) {
   let fs = require('fs')
   let time = new Date(Date.now())
-  fs.appendFile("logs.txt", ip.toString() + "\t" + time.toString() + "\n", funct                                                                     ion (err) {  fs.close });
+  fs.appendFile("logs.log", ip.toString() + "\t" + time.toString() + "\n", function (err) {  fs.close });
   fs.close
 }
 
@@ -39,20 +39,20 @@ function writeLog(ip) {
 async function makeKeyPair() {
   const keyEnv = require('./env/key_env.json');
 
-  const { privateKey, publicKey, revocationCertificate } = await openpgp.generat                                                                     eKey({
+  const { privateKey, publicKey, revocationCertificate } = await openpgp.generateKey({
     type: keyEnv['type'],
     curve: keyEnv['curve'],
     userIDs: [{ name: 'HomeServerMainId' }],
     passphrase: keyEnv["passphrase"],
     format: keyEnv['format']
   });
-  x = { "privateKey": privateKey, "publicKey": publicKey, "revocationCertificate                                                                     ": revocationCertificate };
+  x = { "privateKey": privateKey, "publicKey": publicKey, "revocationCertificate": revocationCertificate };
   x = JSON.stringify(x);
 
   fs = require('fs')
   fs.writeFile("env.json", x, function (err) { console.log("running" + x) });
   fs.close
-  console.log({ "privateKey": privateKey, "publicKey": publicKey, "revocationCer                                                                     tificate": revocationCertificate });
+  console.log({ "privateKey": privateKey, "publicKey": publicKey, "revocationCertificate": revocationCertificate });
 }
 
 
@@ -110,12 +110,12 @@ app.get("/publickey", (req, res) => {
     res.status(200).send(
       JSON.stringify(result));
   }
-  ).catch((_) => res.status(400).send({ "ERROR": "COULD NOT SEND PUBLIC KEY" }))                                                                     ;
+  ).catch((_) => res.status(400).send({ "ERROR": "COULD NOT SEND PUBLIC KEY" }));
 
 }
 );
 
-//TODO:: Find a better logging strat
+//TODO:: Find a better logging strat 
 app.post("/encrypt", (req, res) => {
 
   writeLog(req.ip);
@@ -132,7 +132,7 @@ app.post("/encrypt", (req, res) => {
 
 });
 
-//TODO:: Find a better logging strat
+//TODO:: Find a better logging strat 
 app.post("/decrypt", (req, res) => {
   writeLog(req.ip);
   const message = JSON.parse(JSON.stringify(req.body))['message'];
@@ -144,7 +144,7 @@ app.post("/decrypt", (req, res) => {
 
 });
 
-//Following from: https://stackoverflow.com/questions/11744975/enabling-https-on                                                                     -express-js
+//Following from: https://stackoverflow.com/questions/11744975/enabling-https-on-express-js
 let options = {
   key: fs.readFileSync('./env/crts/internal.pem', 'utf-8'),
   cert: fs.readFileSync('./env/crts/serverCert.crt', 'utf-8'),
@@ -165,10 +165,10 @@ const pubKey = {"publickey": "", "message": "something something"};
 
 
 fetch('http://localhost:8080/publickey', {
-  method: 'get',
+  method: 'get', 
 })
   .then((response) => response.json())
-  .then((data) => {
+  .then((data) => { 
     pubKey["publickey"] = data["publickey"]
     console.log('Success:', data);
   })
@@ -192,7 +192,7 @@ fetch('http://localhost:8080/encrypt', {
   });
 
 
-encMesg = {message: "-----BEGIN PGP MESSAGE-----\n\nwV4DB+OSOUKzh/wSAQdA/eqvn2T3                                                                     ebX9jbPGPitsVzpausSLRZVgv4KJ6j7L\nFUQwPOV8thQVr/q/OwSzDwzTB36mTp9WixtrAOV/UVZcJx                                                                     6TIh5EnJtfGBUw\n9MhhvjG40nkBHKDU6I8D/w1hVJFOUNlJVr9IDQE41LPm16Foe7RXfycZ7cR4\nbr                                                                     b71ZK1EMiMD6iRWL2PzRe2I9edEFVzgVJNYNFG0JTGgVdE8dupD/B/ScN+\n0stovnCmuTYRZbCNI++/                                                                     rLFHz3cFJ4aS/1aJpT4amcUGPTXkQs6W\n=Nihl\n-----END PGP MESSAGE-----\n"}
+encMesg = {message: "-----BEGIN PGP MESSAGE-----\n\nwV4DB+OSOUKzh/wSAQdA/eqvn2T3ebX9jbPGPitsVzpausSLRZVgv4KJ6j7L\nFUQwPOV8thQVr/q/OwSzDwzTB36mTp9WixtrAOV/UVZcJx6TIh5EnJtfGBUw\n9MhhvjG40nkBHKDU6I8D/w1hVJFOUNlJVr9IDQE41LPm16Foe7RXfycZ7cR4\nbrb71ZK1EMiMD6iRWL2PzRe2I9edEFVzgVJNYNFG0JTGgVdE8dupD/B/ScN+\n0stovnCmuTYRZbCNI++/rLFHz3cFJ4aS/1aJpT4amcUGPTXkQs6W\n=Nihl\n-----END PGP MESSAGE-----\n"}
 
 fetch('http://localhost:8080/decrypt', {
   method: 'POST', // or 'PUT'
@@ -203,7 +203,7 @@ fetch('http://localhost:8080/decrypt', {
 })
   .then((response) => response.json())
   .then((data) => {
-    msg = data; //THIS IS THE ENCRYPTED MESSAGE
+    msg = data; //THIS IS THE ENCRYPTED MESSAGE 
     console.log('Success:', data);
   })
   .catch((error) => {
@@ -212,12 +212,12 @@ fetch('http://localhost:8080/decrypt', {
 
   MAKE CRT:
   openssl req -newkey rsa:4096 -new -keyout internal.pem -out csr.pem
-  SIGN CRT:
-  openssl x509 -req -in csr.pem -signkey internal.pem -out serverCert.crt -extfi                                                                     le serverSubjectName.ext
+  SIGN CRT: 
+  openssl x509 -req -in csr.pem -signkey internal.pem -out serverCert.crt -extfile serverSubjectName.ext
   Have a file containing the following called serverSubjectName.ext:
   subjectAltName = DNS:localhost
 
-  NOTE: to run on lower level ports i.e 443 use the following
+  NOTE: to run on lower level ports i.e 443 use the following 
   sudo "$(which node)" .
   PATH VARS to known using sudo
 */
