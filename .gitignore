@@ -102,3 +102,10 @@ dist
 
 # TernJS port file
 .tern-port
+
+#ignoring enviroment varibles express
+/express-internal-backend/env
+
+#ingoring enviroment varibles fastapi
+/fastapi-external-backend/env
+
