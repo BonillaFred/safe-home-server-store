@@ -3,6 +3,9 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Text, and_
 
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
 
 # 1. add user db( sql )
 #   1.1: User: User
@@ -18,7 +21,10 @@ userDBengine = create_engine("sqlite:///users.db", connect_args={"check_same_thr
 session = sessionmaker(bind=userDBengine)()
 Base = declarative_base()
 
-# Make it talk to another server in order to get the key
+#SALT SHOULD BE MOVED TO ENV
+with open('./env/salt.s', 'rb') as iv:
+    SALT = iv.read()
+
 with open('./env/dbKey.key', 'rb') as keyFile:
     crypto = Fernet(keyFile.read())
 
@@ -76,11 +82,23 @@ def searchUrl(user, urlString:str):
             return url
     return None
 
-def addUserUrl(username:str, urlString: str):
+def pbeFernet(password: bytes):
+    password = bytes(password, 'utf-8')
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA512,
+        length=32,
+        salt=SALT,
+        iterations= 580000
+    )
+    key = base64.urlsafe_b64encode(kdf.derive(password))
+    return Fernet(key)
+
+def addUserUrl(username:str, urlString: str, password: str):
+    pbeCrypto = pbeFernet(password)
     try:
         user = getUser(username=username)       
         if searchUrl(user, urlString) is None:
-            url = Url(url=crypto.encrypt(bytes(urlString, 'utf-8')), parentId=user.id)    
+            url = Url(url=pbeCrypto.encrypt(bytes(urlString, 'utf-8')), parentId=user.id)    
             session.add(url)
             session.commit()
         else:
@@ -91,13 +109,14 @@ def addUserUrl(username:str, urlString: str):
         return False
     return True
 
-def getUserUrls(username:str):
+def getUserUrls(username:str, password: str):
     try:
+        pbeCrypto = pbeFernet(password)
         user = getUser(username=username)
         # need to decrypt url list sadly
         urlList = []
         for url in user.url:
-            urlList.append(crypto.decrypt(url.url).decode())
+            urlList.append(pbeCrypto.decrypt(url.url).decode())
         return urlList
     except Exception as e:
         # Find some better way to do logs
@@ -124,4 +143,11 @@ def deleteUser(username:str):
         print(e)
         return False
     return True
+
+def getPassword(user):
+    try:
+        return crypto.decrypt(user.password).decode()
+    except Exception as e:
+        print(e)
+    return None
     
