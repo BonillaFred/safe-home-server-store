@@ -7,15 +7,6 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 
-# 1. add user db( sql )
-#   1.1: User: User
-#        -path: str contains a path to the users enc files. 
-#                   must never expose the top level location 
-#                   of each file.
-#         -username: str 
-#         -passwordHash: str
-#         -(?) public key *force them to use it. 
-# 
 
 userDBengine = create_engine("sqlite:///users.db", connect_args={"check_same_thread": False})
 session = sessionmaker(bind=userDBengine)()
@@ -59,6 +50,14 @@ def getUser(username:str):
             return u
     return None
 
+def getUserEncrypted(username: str):
+    username = crypto.decrypt(bytes(username, 'utf-8')).decode()
+    users = session.query(User).all()
+    for u in users:
+        if crypto.decrypt(u.username).decode() == username:
+            return u
+    return None
+
 def addUser(username: str, password: str):
     userHolder = None
     try:
@@ -76,9 +75,9 @@ def addUser(username: str, password: str):
         return False
     return userHolder.id
 
-def searchUrl(user, urlString:str):
+def searchUrl(user, urlString:str, pbeCrypto: Fernet):
     for url in user.url:
-        if crypto.decrypt(url.url).decode() == urlString:
+        if pbeCrypto.decrypt(url.url).decode() == urlString:
             return url
     return None
 
@@ -96,8 +95,8 @@ def pbeFernet(password: bytes):
 def addUserUrl(username:str, urlString: str, password: str):
     pbeCrypto = pbeFernet(password)
     try:
-        user = getUser(username=username)       
-        if searchUrl(user, urlString) is None:
+        user = getUser(username=crypto.decrypt(username).decode())
+        if searchUrl(user, urlString, pbeCrypto) is None:
             url = Url(url=pbeCrypto.encrypt(bytes(urlString, 'utf-8')), parentId=user.id)    
             session.add(url)
             session.commit()
@@ -112,7 +111,9 @@ def addUserUrl(username:str, urlString: str, password: str):
 def getUserUrls(username:str, password: str):
     try:
         pbeCrypto = pbeFernet(password)
-        user = getUser(username=username)
+
+        user = getUser(username=crypto.decrypt(username).decode())
+
         # need to decrypt url list sadly
         urlList = []
         for url in user.url:
@@ -150,4 +151,3 @@ def getPassword(user):
     except Exception as e:
         print(e)
     return None
-    
