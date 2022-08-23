@@ -124,15 +124,6 @@ def getUserUrls(username:str, password: str):
         print("Error Found: " + str(e))
         return False
 
-def deleteUrls(urls):
-    for url in urls:
-        print("Fake delete: " + crypto.decrypt(url.url).decode()) 
-                                          # delete file resource location within
-                                          # reason. Don't wanna kill the server
-                                          # by removing without checks. Need to 
-                                          # use something like os.delete for 
-                                          # this to work. Left as a stub for now.
-
 def deleteUser(username:str):
     try:
         user = getUser(username)
