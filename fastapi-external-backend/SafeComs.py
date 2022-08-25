@@ -17,9 +17,9 @@ def _makeRequest(url: str, data: dict = None):
     fetched = None
     try:
         if(data is None):
-            fetched = requests.get(url, verify='./env/certs/serverCert.crt')
+            fetched = requests.get(url, verify='./certs/serverCert.crt')
         else:
-            fetched = requests.post(url, json=data, verify='./env/certs/serverCert.crt')
+            fetched = requests.post(url, json=data, verify='./certs/serverCert.crt')
         fetched = _requestCheck(fetched)
     except Exception as e:
         print("Failed to get data:\n" + str(e))
@@ -35,3 +35,5 @@ def encryptMessage(plaintext, encript_url=_ENCRYPT_URL, pub_key_url=_GET_KEY_URL
     pubKey["message"] = plaintext
     return _makeRequest(encript_url, data=pubKey)
 
+def getPublicKey(pub_key_url=_GET_KEY_URL):
+    return _makeRequest(pub_key_url)
